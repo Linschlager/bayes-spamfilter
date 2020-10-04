@@ -1,0 +1,9 @@
+# Assets folder containing the mails to scan. Would be too large to put here
+assets
+
+# Compilation output
+out
+
+# IntelliJ files
+.idea
+bayes-spamfilter.iml
