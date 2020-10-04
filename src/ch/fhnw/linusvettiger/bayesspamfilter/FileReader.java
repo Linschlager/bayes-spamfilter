@@ -30,6 +30,7 @@ public abstract class FileReader {
         ArrayList<String> allWords = new ArrayList<>();
         Arrays
                 .stream(rawFile.split("\\s"))
+                .filter(word -> word.length() > 0) // Filter out empty words
                 .distinct()
                 .forEach(allWords::add);
         return allWords;
