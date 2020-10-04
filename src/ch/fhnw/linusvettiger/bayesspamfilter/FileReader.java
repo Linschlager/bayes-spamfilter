@@ -2,6 +2,7 @@ package ch.fhnw.linusvettiger.bayesspamfilter;
 
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -14,9 +15,8 @@ public abstract class FileReader {
      * @return the content of the read file as a string containing linebreaks
      * @throws IOException if the file cannot be found or read
      */
-    private static String readFile(String path) throws IOException {
-        var parsedPath = Paths.get(path);
-        byte[] rawFile = Files.readAllBytes(parsedPath);
+    private static String readFile(Path path) throws IOException {
+        byte[] rawFile = Files.readAllBytes(path);
         return new String(rawFile);
     }
 
@@ -36,8 +36,24 @@ public abstract class FileReader {
     }
 
     public static List<String> readParseFile(String path) throws IOException {
+        String rawOutput = readFile(Paths.get(path));
+        return parseFile(rawOutput);
+    }
+
+    public static List<String> readParseFile(Path path) throws IOException {
         String rawOutput = readFile(path);
         return parseFile(rawOutput);
+    }
 
+    public static List<List<String>> readParseDirectory(Path folder) throws IOException {
+        List<List<String>> listOfWords = new ArrayList<>();
+        Files.newDirectoryStream(folder).forEach(file -> {
+            try {
+                listOfWords.add(FileReader.readParseFile(file));
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        });
+        return listOfWords;
     }
 }
