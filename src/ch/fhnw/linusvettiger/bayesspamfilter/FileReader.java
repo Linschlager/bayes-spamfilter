@@ -36,16 +36,34 @@ public abstract class FileReader {
         return allWords;
     }
 
+    /**
+     * Helper function to read a file
+     * @param path String representation of absolute or relative path from project root.
+     * @return Words in the file, duplicates and empty strings removed
+     * @throws IOException Error reading from the file system
+     */
     public static List<String> readParseFile(String path) throws IOException {
         String rawOutput = readFile(Paths.get(path));
         return parseFile(rawOutput);
     }
 
+    /**
+     * Helper function to read a file
+     * @param path Absolute or relative path from project root as a {@see Path}
+     * @return Words in the file, duplicates and empty strings removed
+     * @throws IOException Error reading from the file system
+     */
     public static List<String> readParseFile(Path path) throws IOException {
         String rawOutput = readFile(path);
         return parseFile(rawOutput);
     }
 
+    /**
+     * Runs {@see FileReader.readParseFile} for each file in the current folder
+     * @param folder Absolute or relative path from project root as a {@see Path}
+     * @return List of results from {@see FileReader.readParseFile}
+     * @throws IOException Error reading from the file system
+     */
     public static List<List<String>> readParseDirectory(Path folder) throws IOException {
         List<List<String>> listOfWords = new ArrayList<>();
         Files.newDirectoryStream(folder).forEach(file -> {

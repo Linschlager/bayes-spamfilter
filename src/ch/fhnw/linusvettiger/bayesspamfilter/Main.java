@@ -8,12 +8,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static ch.fhnw.linusvettiger.bayesspamfilter.BayesFilter.countOccurrences;
-import static ch.fhnw.linusvettiger.bayesspamfilter.BayesFilter.getSpamProbability;
-import static ch.fhnw.linusvettiger.bayesspamfilter.FileReader.readParseDirectory;
-import static ch.fhnw.linusvettiger.bayesspamfilter.ListMerger.mergeListOfLists;
-
 public class Main {
+    // Defined folders to read from. TODO make configurable through arguments to the program
     private final static Path hamFolder = Paths.get("assets", "ham", "ham-anlern");
     private final static Path hamTestFolder = Paths.get("assets", "ham", "ham-test");
     private final static Path spamFolder = Paths.get("assets", "spam", "spam-anlern");
@@ -26,19 +22,30 @@ public class Main {
     // Threshold under under which, something is considered ham and equals or over is spam
     private final static double threshold = 1f;
 
+    /**
+     * Runs the trained occurrences against a folder of emails to match and count the results
+     * @param folder Folder, the emails lie in
+     * @param spamOccurrences // Trained spam occurrences
+     * @param hamOccurrences // Trained ham occurrences
+     * @return runs, number of found spam and ham emails
+     * @throws IOException If there is a problem reading the filesystem
+     */
     private static int[] runTest(Path folder, Map<String, Double> spamOccurrences, Map<String, Double> hamOccurrences) throws IOException {
+        // Current use-case: Test for spam and ham and count the matches
         int runs = 0;
         int spam = 0;
         int ham = 0;
 
-        // Ham Calibration
-        List<List<String>> hamCalibration = readParseDirectory(folder);
-        for (List<String> hamWords : hamCalibration) {
-            BigDecimal spamProbability = getSpamProbability(hamWords, spamOccurrences, hamOccurrences);
+        // parse the complete folder that was passed to this function
+        List<List<String>> parsedMails = FileReader.readParseDirectory(folder);
+        for (List<String> parsedWords : parsedMails) {
+            BigDecimal spamProbability = BayesFilter.getSpamProbability(parsedWords, spamOccurrences, hamOccurrences);
             runs ++;
             if (spamProbability.doubleValue() < threshold) {
+                // TODO do something with HAM emails
                 ham ++;
             } else {
+                // TODO do something with SPAM emails
                 spam ++;
             }
         }
@@ -50,30 +57,37 @@ public class Main {
         //  ===================
         // || Learning Phase ||
         // ===================
-        List<List<String>> listOfListsOfHamWords = readParseDirectory(hamFolder);
-        List<List<String>> listOfListsOfSpamWords = readParseDirectory(spamFolder);
-        List<String> listOfAllWords = mergeListOfLists(List.of(mergeListOfLists(listOfListsOfHamWords), mergeListOfLists(listOfListsOfSpamWords)));
 
-        HashMap<String, Double> hamOccurrences = countOccurrences(listOfAllWords, listOfListsOfHamWords, alpha);
-        HashMap<String, Double> spamOccurrences = countOccurrences(listOfAllWords, listOfListsOfSpamWords, alpha);
+        // The full folder of ham and spam e-mails are going to be read in and create a list of words, without duplicates
+        // Each element in the outer list represents one email and the inner list the words in that email.
+        List<List<String>> listOfListsOfHamWords = FileReader.readParseDirectory(hamFolder);
+        List<List<String>> listOfListsOfSpamWords = FileReader.readParseDirectory(spamFolder);
+
+        // List of all words in order to create a map of all words and their occurrence
+        List<String> listOfAllWords = ListMerger.mergeListOfLists(List.of(ListMerger.mergeListOfLists(listOfListsOfHamWords), ListMerger.mergeListOfLists(listOfListsOfSpamWords)));
+
+        // Each word that was in one of the original emails is going to receive a probability value of occurring in either ham or spam emails
+        // The key represents the word and the value is the probability in decimal of occurring in either ham or spam emails
+        HashMap<String, Double> hamOccurrences = BayesFilter.countOccurrences(listOfAllWords, listOfListsOfHamWords, alpha);
+        HashMap<String, Double> spamOccurrences = BayesFilter.countOccurrences(listOfAllWords, listOfListsOfSpamWords, alpha);
 
         //  ===================
         // || Matching Phase ||
         // ===================
-        int runs = 0;
-        int matches = 0;
+        int runs = 0; // number of emails read in to match
+        int matches = 0; // number of emails that were correctly tagged
         // int falsePositives = 0; // Was used for debugging
 
 
         int[] hamResult = runTest(hamTestFolder, spamOccurrences, hamOccurrences);
-        runs += hamResult[0];
-        // falsePositives += hamResult[1];
-        matches += hamResult[2];
+        runs += hamResult[0]; // number of runs
+        // falsePositives += hamResult[1]; // number of spam emails found
+        matches += hamResult[2]; // number of ham emails found
 
         int[] spamResult = runTest(spamTestFolder, spamOccurrences, hamOccurrences);
-        runs += spamResult[0];
-        matches += spamResult[1];
-        // falsePositives += spamResult[2];
+        runs += spamResult[0]; // number of runs
+        matches += spamResult[1]; // number of spam emails found
+        // falsePositives += spamResult[2]; // number of ham emails found
 
         //  =============================
         // || Report and Cleanup Phase ||
