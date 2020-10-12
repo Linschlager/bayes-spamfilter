@@ -74,20 +74,17 @@ public class Main {
         //  ===================
         // || Matching Phase ||
         // ===================
-        int runs = 0; // number of emails read in to match
-        int matches = 0; // number of emails that were correctly tagged
-        // int falsePositives = 0; // Was used for debugging
-
-
+        int hamRuns = 0; // number of ham emails read in to match
+        int hamMatches = 0; // number of ham emails that were correctly tagged
         int[] hamResult = runTest(hamTestFolder, spamOccurrences, hamOccurrences);
-        runs += hamResult[0]; // number of runs
-        // falsePositives += hamResult[1]; // number of spam emails found
-        matches += hamResult[2]; // number of ham emails found
+        hamRuns += hamResult[0]; // number of runs
+        hamMatches += hamResult[2]; // number of ham emails found
 
+        int spamRuns = 0; // number of spam emails read in to match
+        int spamMatches = 0; // number of spam emails that were correctly tagged
         int[] spamResult = runTest(spamTestFolder, spamOccurrences, hamOccurrences);
-        runs += spamResult[0]; // number of runs
-        matches += spamResult[1]; // number of spam emails found
-        // falsePositives += spamResult[2]; // number of ham emails found
+        spamRuns += spamResult[0]; // number of runs
+        spamMatches += spamResult[1]; // number of spam emails found
 
         //  =============================
         // || Report and Cleanup Phase ||
@@ -96,6 +93,7 @@ public class Main {
         System.out.println("Report:");
         System.out.printf("Threshold: %f%n", threshold);
         System.out.printf("Alpha: %.20f%n", alpha);
-        System.out.printf("Match Percentage: %f%%%n", (double)matches/runs*100);
+        System.out.printf("Match Percentage for Ham-Emails: %f%%%n", ((double)hamMatches/hamRuns)*100);
+        System.out.printf("Match Percentage for Spam-Emails: %f%%%n", ((double)spamMatches/spamRuns)*100);
     }
 }
